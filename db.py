@@ -13,6 +13,10 @@ def _get_dsn(prefix: str) -> str:
     name = os.getenv(f"{prefix}_DB_NAME", "").strip()
     user = os.getenv(f"{prefix}_DB_USER", os.getenv("DB_USER", "")).strip()
     password = os.getenv(f"{prefix}_DB_PASSWORD", os.getenv("DB_PASSWORD", "")).strip()
+    sslmode = os.getenv(f"{prefix}_DB_SSLMODE", os.getenv("DB_SSLMODE", "require")).strip()
+    connect_timeout = os.getenv(
+        f"{prefix}_DB_CONNECT_TIMEOUT", os.getenv("DB_CONNECT_TIMEOUT", "10")
+    ).strip()
 
     if not all([host, port, name, user, password]):
         raise RuntimeError(
@@ -21,7 +25,10 @@ def _get_dsn(prefix: str) -> str:
             f"(supports shared DB_HOST/DB_PORT/DB_USER/DB_PASSWORD fallbacks)."
         )
 
-    return f"host={host} port={port} dbname={name} user={user} password={password}"
+    return (
+        f"host={host} port={port} dbname={name} user={user} password={password} "
+        f"sslmode={sslmode} connect_timeout={connect_timeout}"
+    )
 
 
 def get_connection(prefix: str):

@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request, url_for
 
 from services.cleanup_service import (
     execute_cleanup,
@@ -62,8 +62,11 @@ def index():
     )
 
 
-@app.route("/rbm-cleanup", methods=["POST"])
+@app.route("/rbm-cleanup", methods=["GET", "POST"])
 def rbm_cleanup():
+    if request.method == "GET":
+        return redirect(url_for("index"))
+
     customer_ids_text = request.form.get("customer_ids", "")
     action = request.form.get("action", "preview")
 
