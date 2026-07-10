@@ -1,0 +1,156 @@
+body {
+    background:
+        radial-gradient(circle at top left, rgba(194, 229, 255, 0.9), transparent 32%),
+        linear-gradient(180deg, #eef4ff 0%, #f8fbff 48%, #eef3f8 100%);
+    color: #172033;
+}
+
+.app-navbar {
+    background: linear-gradient(90deg, #102542 0%, #1d4d6f 100%);
+}
+
+.card {
+    border: 0;
+    border-radius: 0.75rem;
+}
+
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.hero-shell {
+    padding: 2rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, rgba(16, 37, 66, 0.95), rgba(49, 115, 158, 0.9));
+    color: #fff;
+    box-shadow: 0 18px 40px rgba(16, 37, 66, 0.18);
+}
+
+.eyebrow {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.hero-copy {
+    max-width: 52rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.control-card textarea {
+    border-radius: 1rem;
+    border: 1px solid #c6d7e7;
+    box-shadow: inset 0 1px 2px rgba(16, 37, 66, 0.04);
+    min-height: 10rem;
+    resize: vertical;
+}
+
+.preview-status {
+    min-height: 1.5rem;
+    font-size: 0.95rem;
+    color: #48617d;
+}
+
+.preview-grid {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.summary-grid {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    margin-bottom: 1rem;
+}
+
+.summary-tile {
+    min-width: 0;
+    padding: 0.8rem;
+    border-radius: 0.85rem;
+    background: linear-gradient(180deg, #f7fbff 0%, #edf5fb 100%);
+    border: 1px solid #d8e5f0;
+}
+
+.summary-label,
+.section-label {
+    letter-spacing: 0.08em;
+    color: #5d728d;
+    font-size: 0.78rem;
+}
+
+.summary-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #102542;
+    line-height: 1.15;
+}
+
+.preview-section {
+    min-width: 0;
+    padding: 0.9rem;
+    border: 1px solid #dce8f3;
+    border-radius: 1rem;
+    background: #fbfdff;
+}
+
+.empty-preview {
+    padding: 2rem;
+    border: 1px dashed #c3d2e3;
+    border-radius: 1rem;
+    background: rgba(248, 251, 255, 0.9);
+}
+
+.json-preview {
+    max-height: 16rem;
+    overflow: auto;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background: #0f1e33;
+    color: #d8e6f4;
+}
+
+.table td,
+.table th {
+    white-space: nowrap;
+}
+
+.preview-card .card-body,
+.table-responsive {
+    min-width: 0;
+}
+
+.preview-card .table td,
+.preview-card .table th,
+.control-card textarea {
+    overflow-wrap: anywhere;
+}
+
+.preview-card .table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.preview-card .table td,
+.preview-card .table th {
+    white-space: normal;
+}
+
+details summary {
+    cursor: pointer;
+}
+
+@media (max-width: 991.98px) {
+    .hero-shell {
+        padding: 1.5rem;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1280px) {
+    .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

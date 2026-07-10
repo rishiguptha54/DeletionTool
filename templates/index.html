@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-shell mb-4">
+    <div>
+        <p class="eyebrow mb-2">RBM Cleanup</p>
+        <h1 class="display-6 mb-3">Preview when requested, or execute deletion directly from the same customer flow.</h1>
+        <p class="hero-copy mb-0">Enter one or more customer IDs, then click Show Preview or go straight to Execute Deletion.</p>
+    </div>
+</section>
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-5">
+        <div class="card shadow-sm dashboard-card control-card sticky-lg-top">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Customer Input</h2>
+                <p class="text-muted mb-4">Use commas, spaces, or new lines. Show Preview loads the right panel. Execute Deletion deletes immediately and then shows the result counts.</p>
+
+                <form method="post" action="{{ url_for('rbm_cleanup') }}">
+                    <div class="mb-3">
+                        <label for="customer_ids" class="form-label">Customer IDs</label>
+                        <textarea class="form-control form-control-lg" id="customer_ids" name="customer_ids" rows="6" placeholder="1001&#10;1002&#10;1003" required>{{ customer_ids_text }}</textarea>
+                    </div>
+                    <div class="preview-status">Choose the next action for these customer IDs.</div>
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" name="action" value="preview" class="btn btn-primary btn-lg">Show Preview</button>
+                        <button type="submit" name="action" value="execute" class="btn btn-danger btn-lg" onclick="return confirm('Are you sure you want to execute RBM cleanup? This cannot be undone.');">Execute Deletion</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm dashboard-card preview-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="h4 mb-1">Preview</h2>
+                        <p class="text-muted mb-0">Resolved sites and deletion impact across the connected databases.</p>
+                    </div>
+                    <span class="badge text-bg-light border">{% if preview %}Ready{% else %}Idle{% endif %}</span>
+                </div>
+
+                {% if preview %}
+                    <div class="preview-grid">
+                        <div class="summary-grid">
+                            <div class="summary-tile">
+                                <div class="summary-label">Customers</div>
+                                <div class="summary-value">{{ preview.nodes_by_customer | length }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Sites</div>
+                                <div class="summary-value">{{ sites | length }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Properties</div>
+                                <div class="summary-value">{{ preview.properties_by_site | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Properties by Entity</div>
+                                <div class="summary-value">{{ preview.properties_by_entity | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Elements</div>
+                                <div class="summary-value">{{ preview.elements_by_site | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Spatial Elements</div>
+                                <div class="summary-value">{{ preview.spatial_elements_by_site | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Registrations</div>
+                                <div class="summary-value">{{ preview.registrations_by_site | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Authorizations</div>
+                                <div class="summary-value">{{ preview.authorizations_by_site | sum(attribute='count') }}</div>
+                            </div>
+                            <div class="summary-tile">
+                                <div class="summary-label">Nodes</div>
+                                <div class="summary-value">{{ preview.nodes_by_customer | sum(attribute='count') }}</div>
+                            </div>
+                        </div>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Resolved Sites</h3>
+                            {% if sites %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Site Name</th>
+                                        <th>Customer ID</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for site in sites %}
+                                        <tr>
+                                            <td>{{ site.site_id }}</td>
+                                            <td>{{ site.site_name }}</td>
+                                            <td>{{ site.customer_id }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-0">No site IDs matched these customer IDs.</p>
+                            {% endif %}
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Properties by Site</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.properties_by_site %}
+                                        <tr>
+                                            <td>{{ row.site_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Properties by Entity (Entity ID = Site ID)</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Entity ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.properties_by_entity %}
+                                        <tr>
+                                            <td>{{ row.entity_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Elements by Site</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.elements_by_site %}
+                                        <tr>
+                                            <td>{{ row.site_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Spatial Elements by Site</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.spatial_elements_by_site %}
+                                        <tr>
+                                            <td>{{ row.site_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Tools Commissioning Registrations by Site</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.registrations_by_site %}
+                                        <tr>
+                                            <td>{{ row.site_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">Authorizations by Site</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Site ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.authorizations_by_site %}
+                                        <tr>
+                                            <td>{{ row.site_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="preview-section">
+                            <h3 class="h6 text-uppercase section-label mb-3">LCBS Nodes by Customer</h3>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Customer ID</th>
+                                        <th>Rows Found</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for row in preview.nodes_by_customer %}
+                                        <tr>
+                                            <td>{{ row.customer_id }}</td>
+                                            <td>
+                                                {{ row.count }}
+                                                {% if row.count > 0 %}
+                                                    <details class="mt-2">
+                                                        <summary>View rows</summary>
+                                                        <pre class="json-preview mt-2 mb-0">{{ row.rows | tojson(indent=2) }}</pre>
+                                                    </details>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                {% else %}
+                    <div class="empty-preview">
+                        <h3 class="h5">No preview loaded</h3>
+                        <p class="mb-0 text-muted">Click Show Preview to populate the right panel.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if cleanup_result %}
+<div class="card shadow-sm dashboard-card mt-4">
+    <div class="card-body p-4">
+        <h2 class="h4 mb-3">Execution Result</h2>
+
+        <div class="table-responsive mb-4">
+            <h3 class="h6 text-uppercase section-label">Site Cleanup</h3>
+            <table class="table table-striped table-bordered align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Site ID</th>
+                    <th>Properties Deleted by Site</th>
+                    <th>Properties Deleted by Entity</th>
+                    <th>Elements Deleted</th>
+                    <th>Spatial Elements Deleted</th>
+                    <th>Registrations Deleted</th>
+                    <th>Authorizations Deleted</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in cleanup_result.site_rows %}
+                    <tr>
+                        <td>{{ row.site_id }}</td>
+                        <td>{{ row.properties_deleted_by_site }}</td>
+                        <td>0</td>
+                        <td>{{ row.elements_deleted }}</td>
+                        <td>{{ row.spatial_elements_deleted }}</td>
+                        <td>{{ row.registrations_deleted }}</td>
+                        <td>{{ row.authorizations_deleted }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary">
+                <tr>
+                    <th>Totals</th>
+                    <th>{{ cleanup_result.totals.properties_deleted_by_site }}</th>
+                    <th>{{ cleanup_result.totals.properties_deleted_by_entity }}</th>
+                    <th>{{ cleanup_result.totals.elements_deleted }}</th>
+                    <th>{{ cleanup_result.totals.spatial_elements_deleted }}</th>
+                    <th>{{ cleanup_result.totals.registrations_deleted }}</th>
+                    <th>{{ cleanup_result.totals.authorizations_deleted }}</th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="table-responsive">
+            <h3 class="h6 text-uppercase section-label">LCBS Nodes Cleanup</h3>
+            <table class="table table-striped table-bordered align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Customer ID</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in cleanup_result.customer_rows %}
+                    <tr>
+                        <td>{{ row.customer_id }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary">
+                <tr>
+                    <th>Total Nodes Deleted: {{ cleanup_result.totals.nodes_deleted }}</th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
