@@ -11,3 +11,7 @@ services:
         value: 3.11.9
       - key: FLASK_ENV
         value: production
+      - key: DB_SSLMODE
+        value: require
+      - key: DB_CONNECT_TIMEOUT
+        value: "10"
