@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, url_for
+from psycopg2 import OperationalError
 
 from services.cleanup_service import (
     execute_cleanup,
@@ -15,6 +16,14 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "change-me")
+
+
+def _database_unavailable_message() -> str:
+    return (
+        "Database connection failed. If this is deployed on Render, verify your "
+        "Azure PostgreSQL firewall/network allows outbound traffic from Render and "
+        "confirm the DB host, port, username, password, and sslmode env vars."
+    )
 
 
 def build_cleanup_context(customer_ids_text: str):
@@ -81,6 +90,16 @@ def rbm_cleanup():
             cleanup_result=None,
             error_message=str(exc),
         )
+    except OperationalError:
+        app.logger.exception("RBM preview failed due to database connectivity")
+        return render_template(
+            "index.html",
+            customer_ids_text=customer_ids_text,
+            sites=[],
+            preview=None,
+            cleanup_result=None,
+            error_message=_database_unavailable_message(),
+        )
     except Exception:
         app.logger.exception("RBM preview failed during execute")
         return render_template(
@@ -131,6 +150,16 @@ def rbm_cleanup():
             preview=context["preview"],
             cleanup_result=cleanup_result,
             success_message="RBM cleanup completed successfully.",
+        )
+    except OperationalError:
+        app.logger.exception("RBM cleanup execution failed due to database connectivity")
+        return render_template(
+            "index.html",
+            customer_ids_text=context["customer_ids_text"],
+            sites=context["sites"],
+            preview=context["preview"],
+            cleanup_result=None,
+            error_message=_database_unavailable_message(),
         )
     except Exception:
         app.logger.exception("RBM cleanup execution failed")
